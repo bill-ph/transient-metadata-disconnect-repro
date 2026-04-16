@@ -26,12 +26,12 @@ The important case is the commit-stage failure after a transient metadata discon
 
 Repro repo:
 
-- `<REPO URL>`
+- `https://github.com/bill-ph/transient-metadata-disconnect-repro`
 
 Steps:
 
 ```bash
-git clone <REPO URL>
+git clone https://github.com/bill-ph/transient-metadata-disconnect-repro
 cd transient-metadata-disconnect-repro
 ./run.sh
 ```
