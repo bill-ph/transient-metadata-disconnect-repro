@@ -37,7 +37,8 @@ The first run may download the `ducklake` extension via `INSTALL ducklake;`.
 This repro was confirmed on:
 
 - macOS
-- DuckDB `v1.4.4`
+- DuckDB `v1.5.2`
+- DuckLake `v1.0` (extension_version `415a9ebd`, installed from `core`)
 - Docker Compose `v2.40.3`
 - Python `3.9.6`
 

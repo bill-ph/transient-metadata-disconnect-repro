@@ -4,6 +4,8 @@
 
 When a short-lived network disconnect hits the PostgreSQL metadata catalog during a write transaction, DuckLake can fail at transaction end with a commit-style error instead of completing cleanly or failing in a more direct way.
 
+This report is based on the latest stable DuckLake path using DuckDB `v1.5.2` with DuckLake `v1.0` (installed extension version `415a9ebd` from `core`).
+
 In my local repro, the target failure was:
 
 ```text
@@ -46,14 +48,14 @@ The default settings reproduced the problem for me without tuning.
 
 With:
 
-- DuckDB `v1.4.4`
-- published `ducklake` extension installed via `INSTALL ducklake;`
+- DuckDB `v1.5.2`
+- DuckLake `v1.0` (installed extension version `415a9ebd` from `core`)
 - local PostgreSQL metadata catalog behind the blackout proxy
 
 I reproduced:
 
 ```text
-attempt=03 outcome=failure first_line=TransactionContext Error: Failed to commit: Failed to execute query "ROLLBACK":
+attempt=04 outcome=failure first_line=TransactionContext Error: Failed to commit: Failed to execute query "ROLLBACK":
 ```
 
 I also saw:
@@ -64,22 +66,15 @@ attempt=02 outcome=failure first_line=IO Error: Failed to attach DuckLake MetaDa
 
 ## Expected behavior
 
-A transient metadata disconnect should either:
+A short-lived transient metadata disconnect should not fail an otherwise valid transaction.
 
-- fail the transaction in a cleaner and more direct way, or
-- recover predictably if retry/reconnect is expected to be supported
-
-It should not leave the transaction ending in a commit/rollback error state like:
-
-```text
-TransactionContext Error: Failed to commit: Failed to execute query "ROLLBACK":
-```
+DuckLake should be robust to brief metadata-store transport interruptions and self-heal across them, especially when the metadata store is a remote PostgreSQL/RDS deployment in the normal production architecture.
 
 ## Environment
 
 - OS: macOS
-- DuckDB: `v1.4.4`
-- DuckLake: published extension
+- DuckDB: `v1.5.2`
+- DuckLake: `v1.0` (installed extension version `415a9ebd`, `core`)
 - Metadata catalog: PostgreSQL
 - Data path: local filesystem
 - Docker Compose: v2
@@ -87,7 +82,6 @@ TransactionContext Error: Failed to commit: Failed to execute query "ROLLBACK":
 
 ## Notes
 
-- This repro does not require Duckgres.
 - The repro intentionally uses a local TCP proxy to force a very short network blackout against the metadata store.
 - If needed, the repro exposes tuning knobs such as `ATTEMPTS`, `BLACKOUT_MS`, `BLACKOUT_DELAY_MS`, and `ROW_COUNT`.
 - Logs are written under `./logs/<timestamp>/`.
